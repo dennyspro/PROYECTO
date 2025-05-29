@@ -7,8 +7,8 @@ route:
 receivers:
   - name: 'telegram'
     telegram_configs:
-      - bot_token: ''
-        chat_id: 
+      - bot_token: 'abcd1234'
+        chat_id: 1234
         message: |
           🚨 *Alerta en Prometheus*
           Estado: {{ .Status }}
