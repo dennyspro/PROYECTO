@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 14s
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'nginx_web1'
+    static_configs:
+      - targets: ['nginx_exporter_web1:9113']
+
+  - job_name: 'nginx_web2'
+    static_configs:
+      - targets: ['nginx_exporter_web2:9113']
+
+  - job_name: 'node_exporters'
+    static_configs:
+      - targets: ['node_exporter_web1:9100', 'node_exporter_web2:9100']
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+rule_files:
+  - "reglas_alertas.yml"

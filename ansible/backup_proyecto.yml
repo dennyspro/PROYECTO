@@ -1,0 +1,23 @@
+- name: Backup completo del proyecto
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Crear carpeta de backups si no existe
+      file:
+        path: /etc/ansible/backups
+        state: directory
+        mode: '0755'
+
+    - name: Comprimir carpeta PROYECTO
+      archive:
+        path: /etc/ansible/proyecto
+        dest: "/etc/ansible/backups/proyecto_backup_{{ ansible_date_time.iso8601_basic_short }}.tar.gz"
+        format: gz
+      register: backup_result
+
+    - name: Subir backup a Google Drive
+      command: >
+        rclone copy {{ backup_result.dest }}
+        drive:proyecto_backups/
+      environment:
+        RCLONE_CONFIG: /root/.config/rclone/rclone.conf

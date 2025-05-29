@@ -1,0 +1,10 @@
+groups:
+  - name: ejemplo_alerta
+    rules:
+      - alert: InstanciaCaida
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critica
+        annotations:
+          summary: "La instancia {{ $labels.instance }} está caída"

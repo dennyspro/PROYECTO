@@ -1,0 +1,128 @@
+services:
+  haproxy:
+    image: haproxy
+    container_name: haproxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    depends_on:
+      - web1
+      - web2
+    networks:
+      - mynetwork
+
+  nginx_exporter_web1:
+    image: nginx/nginx-prometheus-exporter
+    container_name: nginx_exporter_web1
+    command:
+      - "-nginx.scrape-uri=http://web1/stub_status"
+    ports:
+      - "9113:9113"
+    depends_on:
+      - web1
+    networks:
+      - mynetwork
+
+  nginx_exporter_web2:
+    image: nginx/nginx-prometheus-exporter
+    container_name: nginx_exporter_web2
+    command:
+      - "-nginx.scrape-uri=http://web2/stub_status"
+    ports:
+      - "9114:9113"
+    depends_on:
+      - web2
+    networks:
+      - mynetwork
+
+  node_exporter_web1:
+    build:
+      context: ./node_exporter
+    container_name: node_exporter_web1
+    hostname: web1-metrics
+    networks:
+      - mynetwork
+    ports:
+      - "9101:9100"
+
+  node_exporter_web2:
+    build:
+      context: ./node_exporter
+    container_name: node_exporter_web2
+    hostname: web2-metrics
+    networks:
+      - mynetwork
+    ports:
+      - "9102:9100"
+
+  web1:
+    image: nginx
+    container_name: web1
+    volumes:
+      - ./web1:/usr/share/nginx/html
+      - ./nginx_web.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8081:80"
+    networks:
+      - mynetwork
+
+  web2:
+    image: nginx
+    container_name: web2
+    volumes:
+      - ./web2:/usr/share/nginx/html
+      - ./nginx_web.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8082:80"
+    networks:
+      - mynetwork
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./reglas_alertas.yml:/etc/prometheus/reglas_alertas.yml:ro
+    networks:
+      - mynetwork
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - mynetwork
+
+  ansible:
+    image: ubuntu
+    container_name: ansible
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./ansible:/etc/ansible
+      - ./home/dennys/PROYECTO:/etc/ansible/proyecto
+      - ./ansible/rclone.conf:/root/.config/rclone/rclone.conf
+    networks:
+      - mynetwork
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
